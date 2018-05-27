@@ -1,0 +1,4 @@
+/secrets/*
+!/secrets/app/.gitkeep
+!/secrets/cloudsql/.gitkeep
+!/secrets/ingress/.gitkeep

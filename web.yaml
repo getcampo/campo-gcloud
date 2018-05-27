@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: [IMAGE_NAME]
+          ports:
+            - containerPort: 3000
+          env:
+            - name: RAILS_ENV
+              value: production
+            - name: ENV_FILE
+              value: /app-secrets/env
+          volumeMounts:
+            - name: app-secrets
+              mountPath: /app-secrets
+              readOnly: true
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: ["/cloud_sql_proxy",
+                    "-instances=[INSTANCE_CONNECTION_NAME]=tcp:5432",
+                    "-credential_file=/cloudsql-secrets/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-secrets
+              mountPath: /cloudsql-secrets
+              readOnly: true
+      volumes:
+        - name: app-secrets
+          secret:
+            secretName: app-secrets
+        - name: cloudsql-secrets
+          secret:
+            secretName: cloudsql-secrets
